@@ -67,6 +67,10 @@ Metrics are served on `:9199/metrics`:
 
 Load and battery level are ratios from 0 to 1. Readings are only exported while a UPS is connected. Optional settings: `GCUPS_TIMEOUT` (default `5` seconds) and `EXPORTER_PORT` (default `9199`).
 
+**Grafana dashboard:** import [`exporter/grafana/gcups-dashboard.json`](exporter/grafana/gcups-dashboard.json) (Dashboards → New → Import) and pick your Prometheus data source. It shows every exported metric: power and connection status, battery, load, voltages, frequency, status flags over time, and device ratings.
+
+![Grafana dashboard for the gcups exporter](exporter/grafana/dashboard.png)
+
 Example alerts:
 
 ```yaml
