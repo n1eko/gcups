@@ -1,7 +1,11 @@
 FROM docker.io/library/ubuntu:24.04
 
+LABEL org.opencontainers.image.source="https://github.com/n1eko/gcups" \
+      org.opencontainers.image.description="Green Cell UPS app (GC UPS), headless, with its web UI on port 8080. The bundled app is proprietary Green Cell software."
+
 # Single source of truth for the gcups version (CI reads it from here).
 ARG GCUPS_VERSION=1.1.10
+LABEL org.opencontainers.image.version="${GCUPS_VERSION}"
 ENV GCUPS_HOME=/opt/gcups
 
 # tini as PID 1, plus the shared libraries the Electron binary links against.

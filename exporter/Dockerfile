@@ -1,5 +1,9 @@
 FROM docker.io/library/python:3.12-slim
 
+LABEL org.opencontainers.image.source="https://github.com/n1eko/gcups" \
+      org.opencontainers.image.description="Prometheus exporter for the Green Cell UPS app (GC UPS)" \
+      org.opencontainers.image.licenses="MIT"
+
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
