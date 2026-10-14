@@ -1,0 +1,59 @@
+name: Update gcups version
+
+# Weekly check of Green Cell's download page for a newer gcups release. When one
+# is found, the repo is bumped, both images are built and smoke-tested, and a
+# pull request is opened. Merging it publishes the new image via build.yaml.
+on:
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare versions
+        id: version
+        run: |
+          current="$(sed -nE 's/^ARG GCUPS_VERSION=//p' gcups/Dockerfile)"
+          latest="$(scripts/latest-gcups-version.sh)"
+          echo "current=$current latest=$latest"
+          newest="$(printf '%s\n%s\n' "$current" "$latest" | sort -V | tail -1)"
+          if [ "$latest" != "$current" ] && [ "$newest" = "$latest" ]; then
+            echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "Up to date." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Bump version
+        if: steps.version.outputs.latest
+        run: scripts/set-gcups-version.sh "${{ steps.version.outputs.latest }}"
+
+      - name: Build and smoke-test
+        if: steps.version.outputs.latest
+        run: |
+          docker build -t gcups:test gcups
+          docker build -t gcups-exporter:test exporter
+          tests/smoke.sh gcups:test gcups-exporter:test
+
+      - name: Open pull request
+        if: steps.version.outputs.latest
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: update-gcups-${{ steps.version.outputs.latest }}
+          commit-message: Update gcups to ${{ steps.version.outputs.latest }}
+          title: Update gcups to ${{ steps.version.outputs.latest }}
+          body: |
+            Green Cell's download page now lists gcups **${{ steps.version.outputs.latest }}**.
+
+            This workflow already built both images with the new version and ran `tests/smoke.sh` (no UPS attached) successfully.
+            Pull requests opened by GitHub Actions don't trigger other workflows, so the regular CI runs when this is merged, and then publishes `ghcr.io/${{ github.repository }}:${{ steps.version.outputs.latest }}`.
+
+            Before merging, it's worth checking the new tarball's `install.sh` and the app with a real UPS.
+          delete-branch: true
