@@ -7,6 +7,11 @@ import urllib.request
 from typing import Any
 
 
+# The app answers an expired or otherwise invalid token with 403 (its tokens
+# last 7 days), not 401, so both mean "log in again".
+_TOKEN_REJECTED = (401, 403)
+
+
 class GcupsApiError(Exception):
     """The API could not be reached, rejected the request, or returned garbage."""
 
@@ -32,7 +37,7 @@ class GcupsClient:
             try:
                 return self._request(path)
             except urllib.error.HTTPError as e:
-                if e.code != 401:
+                if e.code not in _TOKEN_REJECTED:
                     raise
                 self._login()
                 return self._request(path)

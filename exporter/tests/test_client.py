@@ -10,7 +10,10 @@ PASSWORD = "Test12345"
 
 
 class FakeGcupsApi(BaseHTTPRequestHandler):
-    """Issues numbered tokens; only the latest token is accepted."""
+    """Issues numbered tokens; only the latest token is accepted.
+
+    Like the real app, it answers a rejected token with 403, not 401.
+    """
     logins = 0
 
     def do_POST(self):
@@ -22,7 +25,7 @@ class FakeGcupsApi(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.headers.get("Authorization") != f"Bearer token-{self.logins}":
-            return self._reply(401, {})
+            return self._reply(403, {})
         if self.path == "/api/empty":
             return self._reply(200, None)
         self._reply(200, {"path": self.path})
